@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Route, Switch, useHistory } from 'react-router-dom';
 import Header from "./Header";
 import Main from "./Main";
 import ProtectedRoute from "./ProtectedRoute";
@@ -13,9 +13,12 @@ import EditProfilePopup from "./EditProfilePopup";
 import EditAvatarPopup from "./EditAvatarPopup";
 import AddPlacePopup from "./AddPlacePopup";
 import { api } from "../utils/api";
+import { auth } from "../utils/auth";
 import {CurrentUserContext} from "../contexts/CurrentUserContext";
 
 function App() {
+  const history = useHistory();
+
   const [isEditProfilePopupOpen, openEditProfile] = React.useState(false);
   const [isAddPlacePopupOpen, openAddPlace] = React.useState(false);
   const [isEditAvatarPopupOpen, openEditAvatar] = React.useState(false);
@@ -32,6 +35,40 @@ function App() {
     openCard: {},
     isOpen: false
   });
+
+  const onSignOut = () => {
+    setLoggedIn(false);
+    localStorage.removeItem("jwt");
+    history.push("./sign-in");
+  }
+
+  const onLogin = (email, password) => {
+    auth.authorize(email, password)
+    .then((res) => {
+      if(res.token) {
+        localStorage.setItem("jwt", res.token);
+        setHeaderEmail(email);
+        setLoggedIn(true);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+  }
+
+  const onRegister = (email, password) => {
+    auth.register(email, password)
+    .then(() => {
+      setRegister(true);
+      openInfoTooltip(true);
+
+    })
+    .catch((err) => {
+      setRegister(false);
+      openInfoTooltip(true);
+      console.log(err)
+    })
+  };
 
   const handleCardLike = (card) => {
     const isLiked = card.likes.some(owner => owner._id === currentUser._id);
@@ -90,6 +127,22 @@ function App() {
   };
 
   React.useEffect(() => {
+    const token = localStorage.getItem("jwt");
+
+    if (token) {
+      auth.checkToken(token)
+      .then((res) => {
+        setLoggedIn(true);
+        setHeaderEmail(res.data.email);
+        history.push("./");
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+    }
+  })
+
+  React.useEffect(() => {
     api.getInitialCards()
     .then((cards) => setCardsArray(cards))
     .catch((err) => console.log(err))
@@ -106,18 +159,18 @@ function App() {
   return (
   <CurrentUserContext.Provider value={currentUser}>
   <div className="page">
-    { loggedIn && <Header loggedIn={loggedIn} headerEmail={headerEmail} setLoggedIn={setLoggedIn} /> }
+    { loggedIn && <Header loggedIn={loggedIn} headerEmail={headerEmail} onSignOut={onSignOut} /> }
     <Switch>
       <ProtectedRoute exact path="/" loggedIn={loggedIn} component={Main} onEditProfile = {openEditProfile}
       onAddPlace = {openAddPlace} onEditAvatar = {openEditAvatar} cardList = {cards.map((card) => <Card card = {card}
       onCardClick = {handleCardClick} key = {card._id} onCardLike={handleCardLike} onCardDelete={handleCardDelete} />)} />
       <Route path="/sign-in">
         { !loggedIn && <Header loggedIn={loggedIn} link="./sign-up" linkText="Регистрация" /> }
-        <Login setLoggedIn={setLoggedIn} setHeaderEmail={setHeaderEmail} />
+        <Login onLogin={onLogin} />
       </Route>
       <Route path="/sign-up">
         { !loggedIn && <Header loggedIn={loggedIn} link="./sign-in" linkText="Вход" /> }
-        <Register setRegister={setRegister} openInfoTooltip={openInfoTooltip} />
+        <Register onRegister={onRegister} />
       </Route>
     </Switch>
     <Footer />
