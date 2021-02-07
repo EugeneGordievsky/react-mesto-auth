@@ -134,13 +134,14 @@ function App() {
       .then((res) => {
         setLoggedIn(true);
         setHeaderEmail(res.data.email);
+        console.log(history)
         history.push("./");
       })
       .catch((err) => {
         console.log(err);
       })
     }
-  })
+  }, [])
 
   React.useEffect(() => {
     api.getInitialCards()
