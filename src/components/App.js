@@ -134,7 +134,6 @@ function App() {
       .then((res) => {
         setLoggedIn(true);
         setHeaderEmail(res.data.email);
-        console.log(history)
         history.push("./");
       })
       .catch((err) => {
