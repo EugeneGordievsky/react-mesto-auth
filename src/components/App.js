@@ -161,17 +161,17 @@ function App() {
   <div className="page">
     { loggedIn && <Header loggedIn={loggedIn} headerEmail={headerEmail} onSignOut={onSignOut} /> }
     <Switch>
-      <ProtectedRoute exact path="/" loggedIn={loggedIn} component={Main} onEditProfile = {openEditProfile}
-      onAddPlace = {openAddPlace} onEditAvatar = {openEditAvatar} cardList = {cards.map((card) => <Card card = {card}
-      onCardClick = {handleCardClick} key = {card._id} onCardLike={handleCardLike} onCardDelete={handleCardDelete} />)} />
-      <Route path="/sign-in">
+      <Route exact path="/sign-in">
         { !loggedIn && <Header loggedIn={loggedIn} link="./sign-up" linkText="Регистрация" /> }
         <Login onLogin={onLogin} />
       </Route>
-      <Route path="/sign-up">
+      <Route exact path="/sign-up">
         { !loggedIn && <Header loggedIn={loggedIn} link="./sign-in" linkText="Вход" /> }
         <Register onRegister={onRegister} />
       </Route>
+      <ProtectedRoute path="/" loggedIn={loggedIn} component={Main} onEditProfile = {openEditProfile}
+      onAddPlace = {openAddPlace} onEditAvatar = {openEditAvatar} cardList = {cards.map((card) => <Card card = {card}
+      onCardClick = {handleCardClick} key = {card._id} onCardLike={handleCardLike} onCardDelete={handleCardDelete} />)} />
     </Switch>
     <Footer />
   </div>
